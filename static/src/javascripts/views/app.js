@@ -10,7 +10,8 @@ define(function(require,exports,module){
             var self = this;                     
             titleCollections.bind('add',this.addOneNav,this);
             titleCollections.bind('reset',this.addAllNav,this); 
-            self.$navContainer = $('#titleNav');    
+            self.$navContainer = $('#titleNav');
+            self.$pageList = $('#pageList'); 
             self.fetchTitle();       
         },
         el:'body',
@@ -18,10 +19,12 @@ define(function(require,exports,module){
         },
         handlerTitle:function(){
             var self = this;
+            self.$navLi = self.$navContainer.find('.navLi');
             self.$navContainer.on('vclick','.navLi',function(e){
-                var self = $(this);
-                if(self.hasClass('navLi')){
-                    console.log(self);
+                var _this = $(this);
+                if(_this.hasClass('navLi')){
+                    self.$navLi.removeClass('selected');
+                    _this.addClass('selected');
                 }
             });
         },
@@ -42,13 +45,22 @@ define(function(require,exports,module){
             var self = this;
             titleCollections.fetch({
                 success:function(model, response, options){
-                    new TRANSFORM.animateBase(self.$navContainer,{isLimit:false,cbfList:{start:function(jq){console.log(jq)}}});
+                    new TRANSFORM.animateBase(self.$navContainer,{isLimit:false});                 
                     self.handlerTitle();
+                    self.makePageContent(response.length);
+                    TRANSFORM.autoWidth(self.$pageList,'.pageContent',true);
                 },
                 error:function(){
                 }
             });
-        }
+        },
+        makePageContent:function(len){
+            var html = '';
+            for(var i = 0 ; i < len ; i++){
+                html += '<li class="pageContent" id="pageContent'+i+'" index='+i+'></li>';
+            }
+            this.$pageList.append(html);           
+        } 
     });
     module.exports = appView;
 })

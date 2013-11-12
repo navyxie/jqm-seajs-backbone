@@ -117,18 +117,32 @@ define(function(require, exports, module){
             style.MozTransform = 
             style.OTransform = 'translate(' + dist.x + 'px,'+dist.y+'px)' + 'translateZ('+dist.z+'px)';
         },
-        autoWidth:function(jq,subClassName){
+        autoWidth:function(jq,subClassName,fixed,marginR){
             $jq = $(jq);
             var width = 0;
-            if((typeof(subClassName) === 'undefined' ? (subClassName = 'li') : '') && typeof(subClassName) === 'string'){
+            fixed = fixed || false;
+            marginR = marginR || 0;
+            var parentWidth = $jq.parent().width();
+            console.log(parentWidth);
+            if((typeof(subClassName) === 'undefined' ? (subClassName = 'li') : subClassName = subClassName) && typeof(subClassName) === 'string'){
                 var subObjs = $jq.find(subClassName);
-                if(subObjs.length){
-                    subObjs.each(function(){
-                        width += $(this).outerWidth();
-                    })
+                var len = subObjs.length;
+                if(len){
+                    subObjs.each(function(index){
+                        var _this = $(this);
+                        if(fixed){
+                            if(++index === len){
+                                _this.css({'float':'left','width':parentWidth+'px'});
+                            }else{
+                                _this.css({'float':'left','margin-right':marginR+'px','width':parentWidth+'px'});
+                            }
+                            
+                        }
+                        width += _this.outerWidth();
+                    });
                 }
             }else if(typeof(subClassName) === 'number'){
-                width = $jq.parent().width()*subClassName;
+                width = parentWidth*subClassName;
             }                  
             $jq.width(width);
         },
