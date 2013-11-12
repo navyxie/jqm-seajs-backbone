@@ -4,6 +4,7 @@ define(function(require,exports,module){
     var titleView = require('./title');
     var titleCollections = new (require('../collections/title'));
     var UTIL = require('../vendors/util');
+    var TRANSFORM = UTIL.TRANSFORM;
     var appView = BB.View.extend({
         initialize:function(){
             var self = this;                     
@@ -13,11 +14,23 @@ define(function(require,exports,module){
             self.fetchTitle();       
         },
         el:'body',
+        events:{
+        },
+        handlerTitle:function(){
+            var self = this;
+            self.$navContainer.on('vclick','.navLi',function(e){
+                var self = $(this);
+                if(self.hasClass('navLi')){
+                    console.log(self);
+                }
+            });
+        },
         render:function(){
             return this;
         },
         addOneNav:function(model){
             this.$navContainer.append(new titleView({model:model}).render().el);
+            TRANSFORM.autoWidth(this.$navContainer);
         },
         addAllNav:function(){
             var self = this;
@@ -26,15 +39,14 @@ define(function(require,exports,module){
             });
         },
         fetchTitle:function(){
+            var self = this;
             titleCollections.fetch({
                 success:function(model, response, options){
-                    console.log(response);
-                    console.log(titleCollections);
+                    new TRANSFORM.animateBase(self.$navContainer,{isLimit:false,cbfList:{start:function(jq){console.log(jq)}}});
+                    self.handlerTitle();
                 },
                 error:function(){
-
-                },
-                reset:true
+                }
             });
         }
     });

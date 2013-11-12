@@ -116,6 +116,148 @@ define(function(require, exports, module){
             style.msTransform = 
             style.MozTransform = 
             style.OTransform = 'translate(' + dist.x + 'px,'+dist.y+'px)' + 'translateZ('+dist.z+'px)';
+        },
+        autoWidth:function(jq,subClassName){
+            $jq = $(jq);
+            var width = 0;
+            if((typeof(subClassName) === 'undefined' ? (subClassName = 'li') : '') && typeof(subClassName) === 'string'){
+                var subObjs = $jq.find(subClassName);
+                if(subObjs.length){
+                    subObjs.each(function(){
+                        width += $(this).outerWidth();
+                    })
+                }
+            }else if(typeof(subClassName) === 'number'){
+                width = $jq.parent().width()*subClassName;
+            }                  
+            $jq.width(width);
+        },
+        animateBase:function(jq,options){
+            var defaultOptions = {
+                direct:'h',//
+                space:5,
+                slideP:5,//px
+                rangeP:100,//px
+                marginR:0,
+                subElement:'li',
+                isLimit:true,
+                cbfList:{
+                    start:$.noop,
+                    moving:$.noop,
+                    end:$.noop
+                }
+            };
+            if(options.cbfList && !(_.isEmpty(options.cbfList))){
+                $.extend(defaultOptions.cbfList,options.cbfList);
+                delete options.cbfList 
+            }
+            $.extend(defaultOptions,options);
+            this.defaultOptions = defaultOptions;
+            this.jq = $(jq); 
+            this.startPage = {x:0,y:0};
+            this.deltaPage = {x:0,y:0};
+            this.endPage = {x:0,y:0};
+            this.isMouseDown = false;
+            this.rangeStartX = 0;
+            this.rangeEndX = 0;
+            this.oneSlide = 0;
+            this.init();
+        }
+    }
+    UTIL.TRANSFORM.animateBase.prototype = {
+        init:function(){
+            this.jq.wrapAll('<div class="animateWrap" style="width:100%;overflow: hidden;"></div>');
+            this.wrapObj = this.jq.parent('.animateWrap');
+            this.targetObj = this.jq.find(this.defaultOptions.subElement);
+            if(this.defaultOptions.isLimit){
+                this.oneSlide = this.wrapObj.width();
+                this.rangeEndX = this.oneSlide*(this.targetObj.length - 1);
+            }else{
+                this.oneSlide = $(this.targetObj[0]).outerWidth();
+                this.rangeEndX = this.jq.width() - this.wrapObj.width();
+            }
+            this.rangeStartX = this.defaultOptions.rangeP;          
+            this.initEvent();
+        },
+        initEvent:function(){
+            var self = this;
+            self.wrapObj.on('vmousedown vmousemove vmouseout vmouseup',this.defaultOptions.subElement,function(e){
+                var _this = $(this);
+                switch(e.type){
+                    case 'vmousedown':
+                        self.startMove(e,_this);
+                        break;
+                    case 'vmousemove':
+                        self.moving(e,_this);
+                        return false;
+                        break;
+                    case 'vmouseout':
+                    case 'vmousedown':
+                        self.endMove(e,_this);
+                        return false;
+                        break;
+                }
+            });
+        },
+        startMove:function(e,targetJq){
+            this.startPage = {x:e.pageX,y:e.pageY};
+            this.deltaPage = {x:0,y:0};
+            this.isMouseDown = true;
+            this.defaultOptions.cbfList.start(targetJq);
+        },
+        moving:function(e,targetJq){
+            if(!this.isMouseDown){
+                return false;
+            }
+            this.deltaPage = {x:e.pageX - this.startPage.x,y:e.pageY - this.startPage.y};
+            var movePageX = this.endPage.x+this.deltaPage.x;
+            if(this.endPage.x === 0 && this.deltaPage.x > this.rangeStartX){
+                // if currentTarget is the first, moveRight maxValue is this.rangeStartX
+                this.deltaPage.x = movePageX = this.rangeStartX;
+            }else if(this.endPage.x === -this.rangeEndX && this.deltaPage.x < -this.rangeStartX){
+                // if currentTarget is the last ,moveLeft maxValue is negative this.rangeStartX
+                movePageX = this.endPage.x - this.rangeStartX;
+                this.deltaPage.x = -this.rangeStartX;
+            }
+            UTIL.TRANSFORM.translate3d(this.jq,{x:movePageX});
+            this.defaultOptions.cbfList.moving(targetJq);
+        },
+        endMove:function(e,targetJq){
+            var self = this;
+            if(this.defaultOptions.isLimit){
+                var endDeltaX = this.deltaPage.x,endDeltay = this.deltaPage.y;
+                var slideP = this.defaultOptions.slideP;
+                if(endDeltaX > 0){
+                    // move left
+                    if(endDeltaX < this.oneSlide*slideP){
+                        // if move Value is less than this.oneSlide*slideP ,reset to prev statue
+                        endDeltaX = this.endPage.x = endDeltaX;               
+                    }else{
+                        // else move to next target
+                        endDeltaX = this.endPage.x = (this.endPage.x + this.oneSlide);
+                    }
+                }else{
+                    // move right
+                    if(endDeltaX > -(this.oneSlide*slideP)){
+                        endDeltaX = this.endPage.x = endDeltaX; 
+                    }else{
+                        endDeltaX = this.endPage.x = (this.endPage.x - this.oneSlide);
+                    }
+                }
+                UTIL.TRANSFORM.translate3d(this.jq,{x:endDeltaX},500);
+            }else{
+                this.endPage.x += this.deltaPage.x;
+                if(this.endPage.x >= 0){
+                    this.endPage.x = 0;
+                    UTIL.TRANSFORM.translate3d(this.jq,{x:0},500);
+                }else if(this.endPage.x <= -self.rangeEndX){
+                    this.endPage.x = -self.rangeEndX;
+                    UTIL.TRANSFORM.translate3d(this.jq,{x:-self.rangeEndX},500);
+                }
+            }
+            this.defaultOptions.cbfList.end(targetJq);          
+            this.startPage = {x:0,y:0};
+            this.isMouseDown = false;
         }
     }
     UTIL.LOAD = {
