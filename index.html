@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head id="head">
+    <meta charset="UTF-8" />
+    <meta name="viewport" id="chaoBaiDa" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="Description" content="潮百搭" />
+    <title>潮百搭</title>
+    <link rel="stylesheet" type="text/css" href="./static/jquerymobile/jquery.mobile-1.3.2.min.css" />
+    <link rel="stylesheet" type="text/css" href="./static/src/stylesheets/index.css" />
+</head>
+<body>
+    <div id="gloabLoading"><img src="./static/src/images/loading.gif" class="loading"/><br /><span class="loadingTxt">loading...</span></div> <div data-role="page" id="index" class="appPage">
+        <header data-role="header" data-position="fixed" class="header fixedBar"><ul id="titleNav"></ul></header>
+        <div data-role="content" class="appContent">
+            <section class="pageContent"><section> 
+        </div>            
+    </div>
+<!--     // <script src="./static/phonegap/cordova.min.js"></script>
+    // <script src="./static/phonegap/childbrowser.min.js"></script> -->
+    <script src="./sea-modules/seajs/seajs/2.1.1/sea.js"></script>
+    <script>
+        window.appConfig = {
+            debug:true,
+            appHost:''
+        }
+        if(window.appConfig.debug === false){
+            window.appConfig.appHost = 'http://www.chaobaida.com';
+        }   
+        // Set configuration
+        var seajsConfig = {
+            base: "./sea-modules/",
+            alias: {
+                "jquery": "jquery/jquery/2.0.3/jquery-debug.js",
+                "jqmobile": "jquery/jquerymobile/1.3.2/jquerymobile-debug.js",
+                "underscore": "gallery/underscore/1.5.2/underscore-debug.js",
+                "backbone": "gallery/backbone/1.1.0/backbone-debug.js"
+                // "jqhammer": "jquery/jqueryhammer/1.0.6/jquery.hammer.js"
+            },
+            vars:{
+                jsPre:'.min'
+            }
+        }
+        if(window.appConfig.debug === false){
+            seajsConfig.alias['cordova'] = "phonegap/cordova/cordova.js";
+            seajsConfig.alias['childbrowser'] = "phonegap/plugins/phonegap-childbrowser.js";
+            seajsConfig.alias['toast'] = "phonegap/plugins/phonegap-toast.js";
+            seajsConfig.alias['message'] = "phonegap/plugins/phonegap-cbdmessage.js";
+        }
+        seajs.config(seajsConfig);
+        // For development
+        if (location.href.indexOf("?dev") > 0) {
+            seajs.use("./static/src/javascripts/main");
+        }
+        // For production
+        else {
+            seajs.use("./static/src/javascripts/main");
+        }
+    </script> 
+</body>
+</html>
