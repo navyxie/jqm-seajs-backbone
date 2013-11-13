@@ -1,8 +1,8 @@
 define(function(require,exports,module){
 	var BB = require('backbone');
-    var baseUrl = window.appConfig.appHost+'/collector/mobile/journal';
+    var baseUrl = window.appConfig.appHost+'/journalinfo';
     var journalModel = BB.Model.extend({
-        idAttribute:'_id',
+        idAttribute:'blogId',
         urlRoot:baseUrl,
         url:baseUrl,
         parse:function(response){

@@ -123,7 +123,6 @@ define(function(require, exports, module){
             fixed = fixed || false;
             marginR = marginR || 0;
             var parentWidth = $jq.parent().width();
-            console.log(parentWidth);
             if((typeof(subClassName) === 'undefined' ? (subClassName = 'li') : subClassName = subClassName) && typeof(subClassName) === 'string'){
                 var subObjs = $jq.find(subClassName);
                 var len = subObjs.length;
@@ -159,7 +158,8 @@ define(function(require, exports, module){
                     start:$.noop,
                     moving:$.noop,
                     end:$.noop
-                }
+                },
+                index:0
             };
             if(options.cbfList && !(_.isEmpty(options.cbfList))){
                 $.extend(defaultOptions.cbfList,options.cbfList);
@@ -175,6 +175,7 @@ define(function(require, exports, module){
             this.rangeStartX = 0;
             this.rangeEndX = 0;
             this.oneSlide = 0;
+            this.index = this.defaultOptions.index;
             this.init();
         }
     }
@@ -183,15 +184,25 @@ define(function(require, exports, module){
             this.jq.wrapAll('<div class="animateWrap" style="width:100%;overflow: hidden;"></div>');
             this.wrapObj = this.jq.parent('.animateWrap');
             this.targetObj = this.jq.find(this.defaultOptions.subElement);
-            if(this.defaultOptions.isLimit){
-                this.oneSlide = this.wrapObj.width();
-                this.rangeEndX = this.oneSlide*(this.targetObj.length - 1);
-            }else{
-                this.oneSlide = $(this.targetObj[0]).outerWidth();
-                this.rangeEndX = this.jq.width() - this.wrapObj.width();
+            var len = this.targetObj.length;
+            if(len){
+                if(this.jq.width() <= this.wrapObj.width()){
+                    return false;
+                }
+                if(this.index >= len-1){
+                    this.index = len -1;
+                }
+                if(this.defaultOptions.isLimit){
+                    this.oneSlide = this.wrapObj.width();
+                    this.rangeEndX = this.oneSlide*(len - 1);
+                }else{
+                    this.oneSlide = $(this.targetObj[0]).outerWidth();
+                    this.rangeEndX = this.jq.width() - this.wrapObj.width();
+                }
+                this.rangeStartX = this.defaultOptions.rangeP;
+                this.showItem(this.index);          
+                this.initEvent();
             }
-            this.rangeStartX = this.defaultOptions.rangeP;          
-            this.initEvent();
         },
         initEvent:function(){
             var self = this;
@@ -214,64 +225,75 @@ define(function(require, exports, module){
             });
         },
         startMove:function(e,targetJq){
-            this.startPage = {x:e.pageX,y:e.pageY};
-            this.deltaPage = {x:0,y:0};
-            this.isMouseDown = true;
-            this.defaultOptions.cbfList.start(targetJq);
+            var self = this;
+            self.startPage = {x:e.pageX,y:e.pageY};
+            self.deltaPage = {x:0,y:0};
+            self.isMouseDown = true;
+            self.defaultOptions.cbfList.start(targetJq,self.index);
         },
         moving:function(e,targetJq){
-            if(!this.isMouseDown){
+            var self = this;
+            if(!self.isMouseDown){
                 return false;
             }
-            this.deltaPage = {x:e.pageX - this.startPage.x,y:e.pageY - this.startPage.y};
-            var movePageX = this.endPage.x+this.deltaPage.x;
-            if(this.endPage.x === 0 && this.deltaPage.x > this.rangeStartX){
+            self.deltaPage = {x:e.pageX - self.startPage.x,y:e.pageY - self.startPage.y};
+            var movePageX = self.endPage.x+self.deltaPage.x;
+            if(self.endPage.x === 0 && self.deltaPage.x > self.rangeStartX){
                 // if currentTarget is the first, moveRight maxValue is this.rangeStartX
-                this.deltaPage.x = movePageX = this.rangeStartX;
-            }else if(this.endPage.x === -this.rangeEndX && this.deltaPage.x < -this.rangeStartX){
+                self.deltaPage.x = movePageX = self.rangeStartX;
+            }else if(self.endPage.x === -self.rangeEndX && self.deltaPage.x < -self.rangeStartX){
                 // if currentTarget is the last ,moveLeft maxValue is negative this.rangeStartX
-                movePageX = this.endPage.x - this.rangeStartX;
-                this.deltaPage.x = -this.rangeStartX;
+                movePageX = self.endPage.x - self.rangeStartX;
+                self.deltaPage.x = -self.rangeStartX;
             }
-            UTIL.TRANSFORM.translate3d(this.jq,{x:movePageX});
-            this.defaultOptions.cbfList.moving(targetJq);
+            UTIL.TRANSFORM.translate3d(self.jq,{x:movePageX});
+            self.defaultOptions.cbfList.moving(targetJq,self.index);
         },
         endMove:function(e,targetJq){
             var self = this;
-            if(this.defaultOptions.isLimit){
-                var endDeltaX = this.deltaPage.x,endDeltay = this.deltaPage.y;
-                var slideP = this.defaultOptions.slideP;
+            if(self.defaultOptions.isLimit){
+                var endDeltaX = self.deltaPage.x,endDeltay = self.deltaPage.y;
+                var slideP = self.defaultOptions.slideP;
                 if(endDeltaX > 0){
                     // move left
-                    if(endDeltaX < this.oneSlide*slideP){
+                    if(endDeltaX < self.oneSlide*slideP){
                         // if move Value is less than this.oneSlide*slideP ,reset to prev statue
-                        endDeltaX = this.endPage.x = endDeltaX;               
+                        endDeltaX = self.endPage.x = endDeltaX;               
                     }else{
                         // else move to next target
-                        endDeltaX = this.endPage.x = (this.endPage.x + this.oneSlide);
+                        endDeltaX = self.endPage.x = (self.endPage.x + self.oneSlide);
+                        ++self.index;
                     }
                 }else{
                     // move right
-                    if(endDeltaX > -(this.oneSlide*slideP)){
-                        endDeltaX = this.endPage.x = endDeltaX; 
+                    if(endDeltaX > -(self.oneSlide*slideP)){
+                        endDeltaX = self.endPage.x = endDeltaX; 
                     }else{
-                        endDeltaX = this.endPage.x = (this.endPage.x - this.oneSlide);
+                        endDeltaX = self.endPage.x = (self.endPage.x - self.oneSlide);
+                        --self.index;
                     }
                 }
-                UTIL.TRANSFORM.translate3d(this.jq,{x:endDeltaX},500);
+                UTIL.TRANSFORM.translate3d(self.jq,{x:endDeltaX},500);
             }else{
-                this.endPage.x += this.deltaPage.x;
-                if(this.endPage.x >= 0){
-                    this.endPage.x = 0;
-                    UTIL.TRANSFORM.translate3d(this.jq,{x:0},500);
-                }else if(this.endPage.x <= -self.rangeEndX){
-                    this.endPage.x = -self.rangeEndX;
-                    UTIL.TRANSFORM.translate3d(this.jq,{x:-self.rangeEndX},500);
+                self.endPage.x += self.deltaPage.x;
+                if(self.endPage.x >= 0){
+                    self.endPage.x = 0;
+                    UTIL.TRANSFORM.translate3d(self.jq,{x:0},500);
+                }else if(self.endPage.x <= -self.rangeEndX){
+                    self.endPage.x = -self.rangeEndX;
+                    UTIL.TRANSFORM.translate3d(self.jq,{x:-self.rangeEndX},500);
                 }
             }
-            this.defaultOptions.cbfList.end(targetJq);          
-            this.startPage = {x:0,y:0};
-            this.isMouseDown = false;
+            self.defaultOptions.cbfList.end(targetJq,self.index);          
+            self.startPage = {x:0,y:0};
+            self.isMouseDown = false;
+        },
+        showItem:function(index){
+            var self = this;
+            UTIL.TRANSFORM.translate3d(self.jq,{x:-index*(self.oneSlide)},500);
+        },
+        getIndex:function(){
+            return this.index;
         }
     }
     UTIL.LOAD = {
@@ -365,6 +387,9 @@ define(function(require, exports, module){
                 }
             }
             return ajustSize;
+        },
+        backTop:function(){
+            $('body').animate({'scrollTop':0},500);
         }
     }
     module.exports = UTIL;

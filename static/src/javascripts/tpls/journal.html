@@ -1,4 +1,14 @@
-<div class="item">
-    <div class="imgContainer"><a class="clickUrl" data-url=<%= cUrl %> href="javascript:;"><img width="100%" height=<%=imgShowH %> src=<%=(this.model.get("uPic") ? uPic : pUrl) %> /></a></div>
-    <div class="itemBottom"><span>￥</span><span><%= parseInt(iPrice) %></span><%=(isBY ? ('<span class="BY">包邮<span>') : "") %></div>
+<div class="journalContainer" klg-blodid=<%=blogId %>>
+	<div class="jBanner">
+		<div class="jDate">
+			<div class="jDay"><%=date %></div>
+			<div class="jMonth"><%=month %></div>
+		</div>
+		<img src=<%= banner %> />
+	</div>
+	<div class="jTitle">
+		<p class="bTitle"><%= bTitle %></p>
+		<p class="sTitle"><%= sTitle %></p>
+	</div>
+	<div class="jContent"></div>
 </div>

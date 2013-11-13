@@ -3,8 +3,11 @@ define(function(require,exports,module){
     var BB = require('backbone');
     var titleView = require('./title');
     var titleCollections = new (require('../collections/title'));
+    var journalView = require('./journal');
     var UTIL = require('../vendors/util');
+    var LOAD = UTIL.LOAD;
     var TRANSFORM = UTIL.TRANSFORM;
+    var journalModelMap = {};
     var appView = BB.View.extend({
         initialize:function(){
             var self = this;                     
@@ -32,14 +35,15 @@ define(function(require,exports,module){
             return this;
         },
         addOneNav:function(model){
-            this.$navContainer.append(new titleView({model:model}).render().el);
+            this.$navContainer.append(new titleView({model:model}).render().el);           
             TRANSFORM.autoWidth(this.$navContainer);
+            journalModelMap[model.get('_id')] = {id:null,loaded:false};
         },
         addAllNav:function(){
             var self = this;
             titleCollections.each(function(){
                 self.addOneNav.apply(self,arguments);
-            });
+            });                
         },
         fetchTitle:function(){
             var self = this;
@@ -48,7 +52,10 @@ define(function(require,exports,module){
                     new TRANSFORM.animateBase(self.$navContainer,{isLimit:false});                 
                     self.handlerTitle();
                     self.makePageContent(response.length);
-                    TRANSFORM.autoWidth(self.$pageList,'.pageContent',true);
+                    TRANSFORM.autoWidth(self.$pageList,'.pageContent',true); 
+                    // new TRANSFORM.animateBase(self.$pageList,{isLimit:true});   
+                    var firstJournal = titleCollections.at(0).toJSON();
+                    self.initJournalModel({_id:firstJournal['_id'],id:"pageContent0"});                                           
                 },
                 error:function(){
                 }
@@ -60,6 +67,28 @@ define(function(require,exports,module){
                 html += '<li class="pageContent" id="pageContent'+i+'" index='+i+'></li>';
             }
             this.$pageList.append(html);           
+        },
+        initJournalModel:function(journalData,cbf){
+            var self = this;
+            if(!(journalModelMap[journalData['_id']])['id']){
+                (journalModelMap[journalData['_id']])['id'] = new journalView({el:'#'+journalData['id']});
+                var isLoading = false;
+                if(!(journalModelMap[journalData['_id']])['loaded']){
+                    (journalModelMap[journalData['_id']])['loaded'] = true;
+                    (journalModelMap[journalData['_id']])['id'].fetchData(
+                        {
+                            'id':journalData['_id']
+                        },
+                        function(err,data){
+                            if(!err){
+
+                            }else{
+                                journalModelMap[journalData['_id']]['loaded'] = false;
+                            }
+                        }
+                    );
+                }
+            }
         } 
     });
     module.exports = appView;

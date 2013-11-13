@@ -1,33 +1,29 @@
 define(function(require,exports,module){
 	var _ = require('underscore'),BB = require('backbone'),UTIL = require('../vendors/util'),$ = require('jquery');
     var waterFallCol = 2,WaterFall = UTIL.WaterFall,DATE = UTIL.Date,LOAD = UTIL.LOAD,setWaterFalColWidth = false,winObj = $(window),winHeight = winObj.height(),headerHeight = $('#index').find('.header').height();
-	var journalView = BB.View.extend({
+	var itemView = require('./item'),journalModel = require('../models/journal'),getTpl = UTIL.TPL.get,itemCollection = require('../collections/item');
+    var journalView = BB.View.extend({
 		className:'journalView',
+        template:_.template(getTpl.call(UTIL.TPL,'journal')),
 		initialize:function(){
-            var self = this;
-            self.queryObj = _.extend({type:'index'},(arguments[0]['query'] || {})); 
-        },
-        firstLoad:function(){
-        	var self = this;
-        	self.fetchData(function(err,params){
-                if(!err){
-                    var response = params[1];
-                    if(response.journal){
-                        self.renderTitle(response);   
-                        self.renderItems(response); 
-                    }
-                }
-            });
+            var self = this; 
+            self.el = $(self.el);      
+            self.itemView = itemView;
+            self.journalModel = new journalModel();
+            self.journalModel.bind('change',this.render,this);
+            self.itemCollection = new itemCollection();          
+            self.itemCollection.bind('add',self.addOne,self);
+            self.itemCollection.bind('reset',self.addAll,self);           
         },
         events:{          
         },
-        fetchData:function(cbf){
+        fetchData:function(data,cbf){
             var self = this;
             LOAD.show();
             self.journalModel.fetch({
-                data:self.queryObj,
+                data:data,
                 success:function(model, response, options){
-                    cbf(null,arguments);
+                    cbf(null,arguments);                               
                     LOAD.hide();     
                 },
                 error:function(){
@@ -42,22 +38,45 @@ define(function(require,exports,module){
                 }
             }); 
         },
-        refreshView:function(){
-            var self = this;
-            self.fetchData(function(err,params){
-                if(!err){
-                    var response = params[1];
-                    if(response.journal){
-                        self.journalTitleObj.html('');
-                        self.waterFallObj.html('');
-                        self.renderTitle(response);   
-                        self.renderItems(response); 
-                    }
-                }
-            })
-        },
         render:function(){
-            return this;
+            var self = this;
+            var response = self.journalModel.toJSON();
+            //准备banner和标题的数据
+            var title = response.tle;
+            var dateTime = new Date(response.pubTime);
+            //dateTime这里的时间转化有问题，自行处理
+            var englishM = DATE.getEnglishMonth(dateTime.getMonth());
+            var tempTitle1 = title;
+            var tempTitle2 = title;
+            var tempIndex = title.indexOf('】');
+            if(tempIndex !== -1){
+                tempTitle1 = title.slice(0,tempIndex+1);
+                tempTitle2 = title.slice(tempIndex+1);
+            }                  
+            self.el.append(self.template({banner:response.banner,blogId:response.blogId,bTitle:tempTitle1,sTitle:tempTitle2,month:englishM,date:dateTime.getDate()}));
+            //渲染banner和标题的结束
+            //准备瀑布流的容器
+            self.waterObj = new WaterFall(waterFallCol);
+            self.waterFallContainer = self.el.find('.jContent').append(self.waterObj.makeColHtml());
+            self.waterFallObj = self.waterFallContainer.find('.waterCol'); 
+            if(!setWaterFalColWidth){
+                setWaterFalColWidth = true;
+                UTIL.setWaterFalColWidth($(self.waterFallObj[0]).width());          
+            } 
+            //准备瀑布流的容器结束
+            self.renderItems(response);    
+            return self;
+        },
+        renderItems:function(response){     
+            //set items to itemCollection start
+            var items = response.items;
+            var self = this;
+            var filterItems = _.filter(items,function(item){
+                return item['pic_size'];
+            });
+            self.itemCollection.reset();
+            self.itemCollection.add(filterItems);
+            //set items to itemCollection end
         },
         addOne:function(model){
         	var self = this;
