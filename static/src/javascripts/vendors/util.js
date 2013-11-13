@@ -146,9 +146,10 @@ define(function(require, exports, module){
             $jq.width(width);
         },
         animateBase:function(jq,options){
+            options = options || {};
             var defaultOptions = {
                 direct:'h',//
-                space:5,
+                space:2,
                 slideP:5,//px
                 rangeP:100,//px
                 marginR:0,
@@ -176,6 +177,8 @@ define(function(require, exports, module){
             this.rangeEndX = 0;
             this.oneSlide = 0;
             this.index = this.defaultOptions.index;
+            this.preIndex = this.defaultOptions.index;
+            this.setTimeoutFlag = null;
             this.init();
         }
     }
@@ -185,6 +188,7 @@ define(function(require, exports, module){
             this.wrapObj = this.jq.parent('.animateWrap');
             this.targetObj = this.jq.find(this.defaultOptions.subElement);
             var len = this.targetObj.length;
+            this.targetObj.len = len;
             if(len){
                 if(this.jq.width() <= this.wrapObj.width()){
                     return false;
@@ -202,6 +206,11 @@ define(function(require, exports, module){
                 this.rangeStartX = this.defaultOptions.rangeP;
                 this.showItem(this.index);          
                 this.initEvent();
+                if(this.defaultOptions.isLimit){
+                    this.showItem(this.index);
+                }else{
+                    this.showNav(this.index);
+                }
             }
         },
         initEvent:function(){
@@ -213,13 +222,13 @@ define(function(require, exports, module){
                         self.startMove(e,_this);
                         break;
                     case 'vmousemove':
-                        self.moving(e,_this);
-                        return false;
+                        return self.moving(e,_this);
+                        // return false;
                         break;
                     case 'vmouseout':
                     case 'vmousedown':
-                        self.endMove(e,_this);
-                        return false;
+                        return self.endMove(e,_this);
+                        // return false;
                         break;
                 }
             });
@@ -237,6 +246,9 @@ define(function(require, exports, module){
                 return false;
             }
             self.deltaPage = {x:e.pageX - self.startPage.x,y:e.pageY - self.startPage.y};
+            if(self.defaultOptions.isLimit && (Math.abs(self.deltaPage.y) > Math.abs(self.deltaPage.x))){
+                return true;
+            }
             var movePageX = self.endPage.x+self.deltaPage.x;
             if(self.endPage.x === 0 && self.deltaPage.x > self.rangeStartX){
                 // if currentTarget is the first, moveRight maxValue is this.rangeStartX
@@ -248,32 +260,46 @@ define(function(require, exports, module){
             }
             UTIL.TRANSFORM.translate3d(self.jq,{x:movePageX});
             self.defaultOptions.cbfList.moving(targetJq,self.index);
+            return false;
         },
         endMove:function(e,targetJq){
             var self = this;
+            var returnVal = false;
             if(self.defaultOptions.isLimit){
+                if(Math.abs(e.pageY - self.startPage.y) > Math.abs(e.pageX - self.startPage.x)){
+                    returnVal = true;
+                }
                 var endDeltaX = self.deltaPage.x,endDeltay = self.deltaPage.y;
                 var slideP = self.defaultOptions.slideP;
                 if(endDeltaX > 0){
                     // move left
-                    if(endDeltaX < self.oneSlide*slideP){
+                    if(endDeltaX < slideP){
                         // if move Value is less than this.oneSlide*slideP ,reset to prev statue
-                        endDeltaX = self.endPage.x = endDeltaX;               
+                        endDeltaX = self.endPage.x;               
                     }else{
                         // else move to next target
                         endDeltaX = self.endPage.x = (self.endPage.x + self.oneSlide);
-                        ++self.index;
+                        --self.index;
                     }
                 }else{
                     // move right
-                    if(endDeltaX > -(self.oneSlide*slideP)){
-                        endDeltaX = self.endPage.x = endDeltaX; 
+                    if(endDeltaX > -(slideP)){
+                        endDeltaX = self.endPage.x; 
                     }else{
                         endDeltaX = self.endPage.x = (self.endPage.x - self.oneSlide);
-                        --self.index;
+                        ++self.index;
                     }
                 }
-                UTIL.TRANSFORM.translate3d(self.jq,{x:endDeltaX},500);
+                if(endDeltaX >= 0 ){
+                    self.endPage.x = endDeltaX = self.index = 0;
+                }else if(endDeltaX <= -self.rangeEndX){
+                    self.endPage.x = endDeltaX = -self.rangeEndX;
+                    self.index = this.targetObj.len-1;
+                }
+                // UTIL.TRANSFORM.translate3d(self.jq,{x:endDeltaX},500);
+                // UTIL.TOOL.backTop();
+                self.showItem(self.index);
+                returnVal = false;              
             }else{
                 self.endPage.x += self.deltaPage.x;
                 if(self.endPage.x >= 0){
@@ -283,17 +309,48 @@ define(function(require, exports, module){
                     self.endPage.x = -self.rangeEndX;
                     UTIL.TRANSFORM.translate3d(self.jq,{x:-self.rangeEndX},500);
                 }
+                returnVal = false;
             }
             self.defaultOptions.cbfList.end(targetJq,self.index);          
             self.startPage = {x:0,y:0};
             self.isMouseDown = false;
+            return returnVal;
         },
         showItem:function(index){
             var self = this;
             UTIL.TRANSFORM.translate3d(self.jq,{x:-index*(self.oneSlide)},500);
+            self.endPage = {x:-index*(self.oneSlide),y:0};
+            self.index = index;
+            if(self.setTimeoutFlag){
+                clearTimeout(self.setTimeoutFlag);
+            }
+            self.setTimeoutFlag = setTimeout(function(){self.jq.height(self.targetObj.eq(index).outerHeight(true))},20);
+            if(self.index !== self.preIndex){
+                UTIL.TOOL.backTop();
+                self.preIndex =  self.index;
+            }          
         },
         getIndex:function(){
             return this.index;
+        },
+        showNav:function(index){
+            var self = this;
+            if(!self.defaultOptions.isLimit){
+                var width = 0;
+                var animateWidth = 0;
+                var wrapWidth = self.wrapObj.width();
+                //self.$targetObj.removeClass('selected').eq(index).addClass('selected');
+                for(var i = 0; i <= index ;i++){
+                    width += $(self.targetObj[i]).outerWidth();
+                }
+                if(width > wrapWidth){
+                    animateWidth = width - wrapWidth;
+                }
+                self.targetObj.removeClass('selected').eq(index).addClass('selected');
+                UTIL.TRANSFORM.translate3d(self.jq,{x:-animateWidth},500);
+                self.endPage = {x:-animateWidth,y:0};
+                self.index = index;
+            }
         }
     }
     UTIL.LOAD = {

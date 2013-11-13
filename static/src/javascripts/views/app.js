@@ -25,11 +25,16 @@ define(function(require,exports,module){
             self.$navLi = self.$navContainer.find('.navLi');
             self.$navContainer.on('vclick','.navLi',function(e){
                 var _this = $(this);
-                if(_this.hasClass('navLi')){
-                    self.$navLi.removeClass('selected');
-                    _this.addClass('selected');
+                if(_this.hasClass('navLi') && !_this.hasClass('selected')){
+                    var index = self.$navLi.index(_this);
+                    self.addSelectedClass(index);
+                    self.initJournalModel({_id:titleCollections.at(index).toJSON()['_id'],id:"pageContent"+index,index:index});
+                    // self.journalAnimate.endPage = -self.journalAnimate.oneSlide*index;
                 }
             });
+        },
+        addSelectedClass:function(index){
+            this.$navLi.removeClass('selected').eq(index).addClass('selected');
         },
         render:function(){
             return this;
@@ -49,13 +54,19 @@ define(function(require,exports,module){
             var self = this;
             titleCollections.fetch({
                 success:function(model, response, options){
-                    new TRANSFORM.animateBase(self.$navContainer,{isLimit:false});                 
+                    self.navAnimate = (new TRANSFORM.animateBase(self.$navContainer,{isLimit:false}));                 
                     self.handlerTitle();
                     self.makePageContent(response.length);
                     TRANSFORM.autoWidth(self.$pageList,'.pageContent',true); 
-                    // new TRANSFORM.animateBase(self.$pageList,{isLimit:true});   
+                    self.journalAnimate = new TRANSFORM.animateBase(
+                        self.$pageList,
+                        {cbfList:{end:function(targetJq,index){
+                            self.navAnimate.showNav(index);
+                            self.initJournalModel({_id:titleCollections.at(index).toJSON()['_id'],id:"pageContent"+index,index:index});
+                        }}}
+                    );   
                     var firstJournal = titleCollections.at(0).toJSON();
-                    self.initJournalModel({_id:firstJournal['_id'],id:"pageContent0"});                                           
+                    self.initJournalModel({_id:firstJournal['_id'],id:"pageContent0",index:0});                                           
                 },
                 error:function(){
                 }
@@ -70,6 +81,7 @@ define(function(require,exports,module){
         },
         initJournalModel:function(journalData,cbf){
             var self = this;
+            cbf = cbf || $.noop;
             if(!(journalModelMap[journalData['_id']])['id']){
                 (journalModelMap[journalData['_id']])['id'] = new journalView({el:'#'+journalData['id']});
                 var isLoading = false;
@@ -81,14 +93,20 @@ define(function(require,exports,module){
                         },
                         function(err,data){
                             if(!err){
-
+                                self.journalAnimate.showItem(journalData['index']);                               
                             }else{
                                 journalModelMap[journalData['_id']]['loaded'] = false;
                             }
+                            cbf(err,data);
                         }
                     );
+                }else{
+                    self.journalAnimate.showItem(journalData['index']);
                 }
+            }else{
+                self.journalAnimate.showItem(journalData['index']);
             }
+            self.$navLi.eq(journalData['index']).addClass('selected');
         } 
     });
     module.exports = appView;

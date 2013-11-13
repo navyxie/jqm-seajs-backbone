@@ -43,7 +43,7 @@ define(function(require,exports,module){
             var response = self.journalModel.toJSON();
             //准备banner和标题的数据
             var title = response.tle;
-            var dateTime = new Date(response.pubTime);
+            var dateTime = new Date(DATE.translateIOSDate(response.pubTime));
             //dateTime这里的时间转化有问题，自行处理
             var englishM = DATE.getEnglishMonth(dateTime.getMonth());
             var tempTitle1 = title;

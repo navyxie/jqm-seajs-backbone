@@ -12,6 +12,10 @@
 body{
 	background: #F1E4EB;
 }
+.ui-mobile, .ui-mobile body{
+	height:auto;
+	overflow-y: scroll;
+}
 img{
 	-webkit-user-select:none;
 	-moz-user-select:none;
@@ -77,6 +81,7 @@ ul,li{
 }
 #pageList{
 	min-height: 800px;
+	overflow-y: hidden;
 	li{
 		min-height: 800px;
 		.journalContainer{
