@@ -137,7 +137,7 @@ define(function(require, exports, module){
                             }
                             
                         }
-                        width += _this.outerWidth();
+                        width += _this.outerWidth(true);
                     });
                 }
             }else if(typeof(subClassName) === 'number'){
@@ -420,6 +420,10 @@ define(function(require, exports, module){
                 flag = true;
             }
             return flag;
+        },
+        isMobile:function(){
+            var os = UTIL.OS.detect(navigator.userAgent);
+            return (os.os.phone || os.os.tablet);
         }
     }
     UTIL.URL = {

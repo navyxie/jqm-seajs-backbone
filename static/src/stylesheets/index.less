@@ -46,31 +46,45 @@ ul,li{
 }
 .header{
 	width: 100%;
-	height: 52px;
-	line-height: 52px;
+	height: 56px;
 	text-align: center;
 	color: #fff;
 	font-size: 20px;
 	font-weight: bold;
-	background: url(../images/head.png) 0 -40px repeat-x;
-	text-shadow:0 1px 1px #FF4380;
+	background: #F8E9F0;
 	word-spacing: 5px;
 	letter-spacing:5px;
+	box-shadow: 0 4px 1px #fae7f0;
 	top:0;
 	overflow: hidden;
 	ul{
 		li{
 			display: inline-block;
-			padding: 0 10px;
+			border-right: 1px solid #DDB9C5;
+			height: 36px;
+			line-height: 36px;
+			margin-top: 10px;
+			padding: 0 20px;
 			a{
 				font-size: 16px;
 				font-weight: bold;
+				color: #360617;
+				padding: 10px 16px;
 			}
 		}
+		li:last-child{
+			border-right: none;
+		}
 		.selected{
-			background:#000;
 			a{
 				color:#fff;
+				background: #FE668F;
+				border-radius: 5px;
+				border: 1px solid #DB577C;
+				padding: 6px 12px;
+				box-shadow: 0px 1px 2px #662939;
+				-webkit-box-shadow: 0px 1px 2px #662939;
+				-moz-box-shadow: 0px 1px 2px #662939;
 			}
 		}
 	}
@@ -88,6 +102,7 @@ ul,li{
 			.jBanner{
 				position: relative;
 				text-align: center;
+				min-height: 160px;
 				img{
 					display: block;
 					max-width: 100%;
@@ -95,56 +110,64 @@ ul,li{
 				}
 				.jDate{
 					display: inline-block;
+					z-index: 2;
 					width: 70px;
 					height: 70px;
 					position: absolute;
-					left: 0;
-					top: 0;
-					background: #fff;
-					color: #FF5681;
-					-webkit-border-bottom-right-radius: 70px;
-					-moz-border-bottom-right-radius: 70px;
-					border-bottom-right-radius: 70px;
-					div{
-						margin-left: -10px;
-					}
+					right: 10px;
+					top: 10px;
+					background: #666;
+					color: #fff;
+					border-radius: 70px;
+					-webkit-border-radius: 70px;
+					-moz-border-radius: 70px;
+					border-radius: 70px;
+					opacity: 0.3;
 					text-align: center;
 					.jDay{
-						font-size: 16px;
-						font-weight: bold;
-						color: #FA5984;
-						height: 30px;
-						line-height: 30px;
+						font-size: 22px;
+						font-weight: bold;				
 					}
 					.jMonth{
 						font-size: 16px;
+						padding-top: 10px;
 					}
 				}
 			}
 			.jTitle{
-				height: 60px;
-				padding: 10px;
+				width: 100%;
+				// height: 60px;
+				padding: 5px 0;
+				position: absolute;
+				z-index: 1;
+				bottom: 0;
+				left: 0;
+				background: #fff;
+				opacity: 0.7;
+				border-top: 1px solid #fff;
 				p{
 					overflow: hidden;
+					padding:0 10px 5px 10px;
+					text-align: left;
 				}
 				.bTitle{
-					font-size: 20px;
+					font-size: 30px;
 					font-weight: bold;
-					color: #FA5984;
+					color: #360919;
 					text-overflow: ellipsis;
 					-webkit-text-overflow: ellipsis;
 					-moz-text-overflow: ellipsis;
-					height: 40px;
-					line-height: 40px;
+					// height: 40px;
+					// line-height: 40px;
 				}
 				.sTitle{
 					font-size: 16px;
-					color: #AA9D97;
+					color: #310E12;
 					text-overflow: ellipsis;
 					-webkit-text-overflow: ellipsis;
 					-moz-text-overflow: ellipsis;
-					height: 20px;
-					line-height: 20px;
+					// height: 20px;
+					// line-height: 20px;
 				}
 			}
 			.jContent{
@@ -158,9 +181,9 @@ ul,li{
 						margin: 10px 0;
 						border-radius: 10px;
 						background: #fff;
-						-webkit-box-shadow: 0px 2px 2px #C6A9AB;
-						-moz-box-shadow: 0px 2px 2px #C6A9AB;
-						box-shadow: 0px 2px 2px #C6A9AB;
+						-webkit-box-shadow: 0px 1px 2px #ccc;
+						-moz-box-shadow: 0px 1px 2px #ccc;
+						box-shadow: 0px 1px 2px #ccc;
 						.imgContainer{
 							width: 100%;
 							overflow: hidden;	
@@ -175,16 +198,33 @@ ul,li{
 						}
 						.itemBottom{
 							padding: 0 5px;
-							height: 30px;
-							line-height: 30px;
+							height: 40px;
+							line-height: 40px;
 							color: #FC5A85;
 							.BY{
 								margin-left: 5px;
-								color: #FD9BB7
+								color: #360b17
 							}
 							.likeContainer{
 								float: right;
 								margin-right: 10px;
+								.likeBtn{
+									display: inline-block;
+									width: 31px;
+									height: 26px;
+								}
+								.likedBtn{
+									background: url(../images/after_small.png) no-repeat;
+								}
+								.unLikeBtn{
+									background: url(../images/before_small.png) no-repeat;
+								}
+								i{
+									vertical-align: 6px;
+									font-style: normal;
+									color: #360b17;
+									margin-left: 5px;
+								}
 							}
 						}
 					}
@@ -222,4 +262,18 @@ ul,li{
     img{
         margin-top: 15px;
     }
+}
+#likeJounalBtn{
+	position: fixed;
+	right: 10px;
+	bottom: 50%;
+	margin-bottom: -90px;
+	width: 89px;
+	height: 89px;
+}
+.unLikeJounalBtn{
+	background: url(../images/before_big.png) no-repeat;
+}
+.likedJounalBtn{
+	background: url(../images/after_big.png) no-repeat;
 }

@@ -1,14 +1,15 @@
 <div class="journalContainer" klg-blodid=<%=blogId %>>
 	<div class="jBanner">
 		<div class="jDate">
-			<div class="jDay"><%=date %></div>
-			<div class="jMonth"><%=month %></div>
+			<div class="jMonth"><%=month %>月</div>
+			<div class="jDay"><%=date %></div>		
+		</div>
+		<div class="jTitle">
+			<p class="bTitle"><%= bTitle %></p>
+			<p class="sTitle"><%= sTitle %></p>
 		</div>
 		<img src=<%= banner %> />
 	</div>
-	<div class="jTitle">
-		<p class="bTitle"><%= bTitle %></p>
-		<p class="sTitle"><%= sTitle %></p>
-	</div>
+	
 	<div class="jContent"></div>
 </div>

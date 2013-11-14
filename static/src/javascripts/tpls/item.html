@@ -1,4 +1,4 @@
 <div class="item">
     <div class="imgContainer"><a class="clickUrl" data-url=<%= cUrl %> href="javascript:;"><img width="100%" height=<%=imgShowH %> src=<%=(this.model.get("uPic") ? uPic : pUrl) %> /></a></div>
-    <div class="itemBottom"><span class="likeContainer"><em>like</em><i>10</i></span><span>￥</span><span><%= parseInt(iPrice) %></span><%=(isBY ? ('<span class="BY">包邮<span>') : "") %></div>
+    <div class="itemBottom"><span class="likeContainer"><em class="likeBtn unLikeBtn"></em><i>10</i></span><span>￥</span><span><%= parseInt(iPrice) %></span><%=(isBY ? ('<span class="BY">包邮<span>') : "") %></div>
 </div>

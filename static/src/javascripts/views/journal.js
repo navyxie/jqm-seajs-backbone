@@ -45,7 +45,8 @@ define(function(require,exports,module){
             var title = response.tle;
             var dateTime = new Date(DATE.translateIOSDate(response.pubTime));
             //dateTime这里的时间转化有问题，自行处理
-            var englishM = DATE.getEnglishMonth(dateTime.getMonth());
+            // var englishM = DATE.getEnglishMonth(dateTime.getMonth());
+            var englishM = 1+dateTime.getMonth();
             var tempTitle1 = title;
             var tempTitle2 = title;
             var tempIndex = title.indexOf('】');
