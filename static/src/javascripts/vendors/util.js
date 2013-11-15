@@ -4,6 +4,8 @@ define(function(require, exports, module){
     var taoBaoImgSize = [40,60,80,100,120,160,180,200,240,250,300,310,320,360,400,460,600];//淘宝图片尺寸
     var englishM = new Array("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Spt","Oct","Nov","Dec");
     var waterFallColWidth = 304;
+    var prefix = 'cbdapp';
+    var eventMap= ['vmousedown','vmousemove','vmouseup','vmouseout'];
     function isType(object,type){
         type = type || 'string';
         if(typeof(type) !== 'string'){
@@ -149,8 +151,8 @@ define(function(require, exports, module){
             options = options || {};
             var defaultOptions = {
                 direct:'h',//
-                space:2,
-                slideP:5,//px
+                space:10,
+                slideP:10,//px
                 rangeP:100,//px
                 marginR:0,
                 subElement:'li',
@@ -179,6 +181,7 @@ define(function(require, exports, module){
             this.index = this.defaultOptions.index;
             this.preIndex = this.defaultOptions.index;
             this.setTimeoutFlag = null;
+            this.isScrolling = undefined;//true为水平方向，false为垂直方向
             this.init();
         }
     }
@@ -215,20 +218,22 @@ define(function(require, exports, module){
         },
         initEvent:function(){
             var self = this;
-            self.wrapObj.on('vmousedown vmousemove vmouseout vmouseup',this.defaultOptions.subElement,function(e){
+            self.wrapObj.on(eventMap.join(' '),this.defaultOptions.subElement,function(e){
                 var _this = $(this);
+                // var eTarget = e;
+                // if(UTIL.OS.isMobile()){
+                //     eTarget = eTarget.originalEvent.touches[0];
+                // }
                 switch(e.type){
-                    case 'vmousedown':
+                    case eventMap[0]:
                         self.startMove(e,_this);
                         break;
-                    case 'vmousemove':
+                    case eventMap[1]:
                         return self.moving(e,_this);
-                        // return false;
                         break;
-                    case 'vmouseout':
-                    case 'vmousedown':
+                    case eventMap[2]:
+                    // case eventMap[3]:
                         return self.endMove(e,_this);
-                        // return false;
                         break;
                 }
             });
@@ -238,80 +243,98 @@ define(function(require, exports, module){
             self.startPage = {x:e.pageX,y:e.pageY};
             self.deltaPage = {x:0,y:0};
             self.isMouseDown = true;
+            self.isScrolling = undefined;
             self.defaultOptions.cbfList.start(targetJq,self.index);
         },
         moving:function(e,targetJq){
             var self = this;
+            var returnVal = false;
             if(!self.isMouseDown){
-                return false;
+                returnVal =  false;
+            }else{
+                self.deltaPage = {x:e.pageX - self.startPage.x,y:e.pageY - self.startPage.y};
+                if (typeof self.isScrolling == 'undefined') {
+                    self.isScrolling = !!( self.isScrolling || Math.abs(self.deltaPage.x) < Math.abs(self.deltaPage.y) );
+                }
+                if(!self.isScrolling && Math.abs(self.deltaPage.x)>(self.defaultOptions.space)){
+                    if(self.defaultOptions.isLimit && (Math.abs(self.deltaPage.y) > Math.abs(self.deltaPage.x))){
+                        returnVal =  true;
+                    }else{
+                        var movePageX = self.endPage.x+self.deltaPage.x;
+                        if(self.endPage.x === 0 && self.deltaPage.x > self.rangeStartX){
+                            // if currentTarget is the first, moveRight maxValue is this.rangeStartX
+                            self.deltaPage.x = movePageX = self.rangeStartX;
+                        }else if(self.endPage.x === -self.rangeEndX && self.deltaPage.x < -self.rangeStartX){
+                            // if currentTarget is the last ,moveLeft maxValue is negative this.rangeStartX
+                            movePageX = self.endPage.x - self.rangeStartX;
+                            self.deltaPage.x = -self.rangeStartX;
+                        }
+                        UTIL.TRANSFORM.translate3d(self.jq,{x:movePageX});
+                        self.defaultOptions.cbfList.moving(targetJq,self.index);
+                        returnVal =  false;
+                    }              
+                }else{
+                    returnVal = true;
+                }               
             }
-            self.deltaPage = {x:e.pageX - self.startPage.x,y:e.pageY - self.startPage.y};
-            if(self.defaultOptions.isLimit && (Math.abs(self.deltaPage.y) > Math.abs(self.deltaPage.x))){
-                return true;
-            }
-            var movePageX = self.endPage.x+self.deltaPage.x;
-            if(self.endPage.x === 0 && self.deltaPage.x > self.rangeStartX){
-                // if currentTarget is the first, moveRight maxValue is this.rangeStartX
-                self.deltaPage.x = movePageX = self.rangeStartX;
-            }else if(self.endPage.x === -self.rangeEndX && self.deltaPage.x < -self.rangeStartX){
-                // if currentTarget is the last ,moveLeft maxValue is negative this.rangeStartX
-                movePageX = self.endPage.x - self.rangeStartX;
-                self.deltaPage.x = -self.rangeStartX;
-            }
-            UTIL.TRANSFORM.translate3d(self.jq,{x:movePageX});
-            self.defaultOptions.cbfList.moving(targetJq,self.index);
-            return false;
-        },
+            return returnVal;
+        },  
         endMove:function(e,targetJq){
             var self = this;
             var returnVal = false;
-            if(self.defaultOptions.isLimit){
-                if(Math.abs(e.pageY - self.startPage.y) > Math.abs(e.pageX - self.startPage.x)){
-                    returnVal = true;
-                }
-                var endDeltaX = self.deltaPage.x,endDeltay = self.deltaPage.y;
-                var slideP = self.defaultOptions.slideP;
-                if(endDeltaX > 0){
-                    // move left
-                    if(endDeltaX < slideP){
-                        // if move Value is less than this.oneSlide*slideP ,reset to prev statue
-                        endDeltaX = self.endPage.x;               
+            // alert(Math.abs(e.pageY - self.startPage.y) > Math.abs(e.pageX - self.startPage.x));
+            if (!self.isScrolling){
+                if(self.defaultOptions.isLimit){              
+                    if(Math.abs(e.pageY - self.startPage.y) > Math.abs(e.pageX - self.startPage.x)){
+                        returnVal = true;
                     }else{
-                        // else move to next target
-                        endDeltaX = self.endPage.x = (self.endPage.x + self.oneSlide);
-                        --self.index;
-                    }
+                        var endDeltaX = self.deltaPage.x,endDeltay = self.deltaPage.y;
+                        var slideP = self.defaultOptions.slideP;
+                        if(endDeltaX > 0){
+                            // move left
+                            if(endDeltaX < slideP){
+                                // if move Value is less than this.oneSlide*slideP ,reset to prev statue
+                                endDeltaX = self.endPage.x;               
+                            }else{
+                                // else move to next target
+                                endDeltaX = self.endPage.x = (self.endPage.x + self.oneSlide);
+                                --self.index;
+                            }
+                        }else{
+                            // move right
+                            if(endDeltaX > -(slideP)){
+                                endDeltaX = self.endPage.x; 
+                            }else{
+                                endDeltaX = self.endPage.x = (self.endPage.x - self.oneSlide);
+                                ++self.index;
+                            }
+                        }
+                        if(endDeltaX >= 0 ){
+                            self.endPage.x = endDeltaX = self.index = 0;
+                        }else if(endDeltaX <= -self.rangeEndX){
+                            self.endPage.x = endDeltaX = -self.rangeEndX;
+                            self.index = this.targetObj.len-1;
+                        }
+                        // UTIL.TRANSFORM.translate3d(self.jq,{x:endDeltaX},500);
+                        // UTIL.TOOL.backTop();
+                        self.showItem(self.index);
+                        returnVal = false;  
+                    }            
                 }else{
-                    // move right
-                    if(endDeltaX > -(slideP)){
-                        endDeltaX = self.endPage.x; 
-                    }else{
-                        endDeltaX = self.endPage.x = (self.endPage.x - self.oneSlide);
-                        ++self.index;
+                    self.endPage.x += self.deltaPage.x;
+                    if(self.endPage.x >= 0){
+                        self.endPage.x = 0;
+                        UTIL.TRANSFORM.translate3d(self.jq,{x:0},500);
+                    }else if(self.endPage.x <= -self.rangeEndX){
+                        self.endPage.x = -self.rangeEndX;
+                        UTIL.TRANSFORM.translate3d(self.jq,{x:-self.rangeEndX},500);
                     }
+                    returnVal = false;
                 }
-                if(endDeltaX >= 0 ){
-                    self.endPage.x = endDeltaX = self.index = 0;
-                }else if(endDeltaX <= -self.rangeEndX){
-                    self.endPage.x = endDeltaX = -self.rangeEndX;
-                    self.index = this.targetObj.len-1;
-                }
-                // UTIL.TRANSFORM.translate3d(self.jq,{x:endDeltaX},500);
-                // UTIL.TOOL.backTop();
-                self.showItem(self.index);
-                returnVal = false;              
+                self.defaultOptions.cbfList.end(targetJq,self.index);
             }else{
-                self.endPage.x += self.deltaPage.x;
-                if(self.endPage.x >= 0){
-                    self.endPage.x = 0;
-                    UTIL.TRANSFORM.translate3d(self.jq,{x:0},500);
-                }else if(self.endPage.x <= -self.rangeEndX){
-                    self.endPage.x = -self.rangeEndX;
-                    UTIL.TRANSFORM.translate3d(self.jq,{x:-self.rangeEndX},500);
-                }
-                returnVal = false;
-            }
-            self.defaultOptions.cbfList.end(targetJq,self.index);          
+                returnVal = true;
+            }          
             self.startPage = {x:0,y:0};
             self.isMouseDown = false;
             return returnVal;
@@ -453,5 +476,21 @@ define(function(require, exports, module){
             $('body').animate({'scrollTop':0},500);
         }
     }
+    UTIL.STORE = {
+        setItem:function(key,val){
+            window.localStorage.setItem(prefix+key,JSON.stringify(val));
+        },
+        getItem:function(key){
+            return JSON.parse(window.localStorage.getItem(prefix+key));
+        },
+        removeItem:function(key){
+            window.localStorage.removeItem(prefix+key);
+        }
+    }
+    !function(){
+        if(UTIL.OS.isMobile()){
+            // eventMap = ['touchstart','touchmove','touchend','touchcancel'];
+        }       
+    }()
     module.exports = UTIL;
 })

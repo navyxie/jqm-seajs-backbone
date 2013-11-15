@@ -3,7 +3,8 @@
 	$(function(){
 	    $.support.cors = true;
 	    $.mobile.allowCrossDomainPages = true;
-		var TPL = require('./vendors/util').TPL;
+	    var UTIL = require('./vendors/util');
+		var TPL = UTIL.TPL;
 		TPL.loadTemplates(['title','item','journal'],function(){		
 			var BB = require('backbone');
 			var appView = require('./views/app');			
