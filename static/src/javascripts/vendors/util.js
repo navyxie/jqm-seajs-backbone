@@ -6,6 +6,7 @@ define(function(require, exports, module){
     var waterFallColWidth = 304;
     var prefix = 'cbdapp';
     var eventMap= ['vmousedown','vmousemove','vmouseup','vmouseout'];
+    var $doc = $(document);
     function isType(object,type){
         type = type || 'string';
         if(typeof(type) !== 'string'){
@@ -110,14 +111,21 @@ define(function(require, exports, module){
             dist = $.extend({x:0,y:0,z:0},dist);
             var style = jqObj[0].style;
             if (!style) return;
+            style.webkitAnimationFillMode = 
+            style.MozAnimationFillMode = 
+            style.msAnimationFillMode = 
+            style.OAnimationFillMode = 'forwards';
+            style.webkitTransform
             style.MozTransitionDuration = 
             style.msTransitionDuration = 
             style.OTransitionDuration = 
             style.transitionDuration = speed + 'ms';
-            style.webkitTransform = 'translate(' + dist.x + 'px,'+dist.y+'px)' + 'translateZ('+dist.z+'px)';
+            style.webkitTransform = 'translate(' + dist.x + 'px,0)' + 'translateZ(0)';
+            //style.webkitTransform = 'translate(' + dist.x + 'px,'+dist.y+'px)' + 'translateZ('+dist.z+'px)';
             style.msTransform = 
             style.MozTransform = 
-            style.OTransform = 'translate(' + dist.x + 'px,'+dist.y+'px)' + 'translateZ('+dist.z+'px)';
+            style.OTransform = 'translateX(' + dist.x + 'px)';
+            //style.OTransform = 'translate(' + dist.x + 'px,'+dist.y+'px)' + 'translateZ('+dist.z+'px)';
         },
         autoWidth:function(jq,subClassName,fixed,marginR){
             $jq = $(jq);
@@ -232,7 +240,6 @@ define(function(require, exports, module){
                         return self.moving(e,_this);
                         break;
                     case eventMap[2]:
-                    // case eventMap[3]:
                         return self.endMove(e,_this);
                         break;
                 }
@@ -240,6 +247,8 @@ define(function(require, exports, module){
         },
         startMove:function(e,targetJq){
             var self = this;
+            e = e.originalEvent.touches ?
+                    e.originalEvent.touches[ 0 ] : e;
             self.startPage = {x:e.pageX,y:e.pageY};
             self.deltaPage = {x:0,y:0};
             self.isMouseDown = true;
@@ -248,6 +257,8 @@ define(function(require, exports, module){
         },
         moving:function(e,targetJq){
             var self = this;
+            e = e.originalEvent.touches ?
+                    e.originalEvent.touches[ 0 ] : e;
             var returnVal = false;
             if(!self.isMouseDown){
                 returnVal =  false;
@@ -257,6 +268,7 @@ define(function(require, exports, module){
                     self.isScrolling = !!( self.isScrolling || Math.abs(self.deltaPage.x) < Math.abs(self.deltaPage.y) );
                 }
                 if(!self.isScrolling && Math.abs(self.deltaPage.x)>(self.defaultOptions.space)){
+                    e.preventDefault();
                     if(self.defaultOptions.isLimit && (Math.abs(self.deltaPage.y) > Math.abs(self.deltaPage.x))){
                         returnVal =  true;
                     }else{
@@ -281,6 +293,8 @@ define(function(require, exports, module){
         },  
         endMove:function(e,targetJq){
             var self = this;
+            e = e.originalEvent.touches ?
+                    e.originalEvent.touches[ 0 ] : e;
             var returnVal = false;
             // alert(Math.abs(e.pageY - self.startPage.y) > Math.abs(e.pageX - self.startPage.x));
             if (!self.isScrolling){
@@ -340,18 +354,20 @@ define(function(require, exports, module){
             return returnVal;
         },
         showItem:function(index){
-            var self = this;
-            UTIL.TRANSFORM.translate3d(self.jq,{x:-index*(self.oneSlide)},500);
+            var self = this;          
             self.endPage = {x:-index*(self.oneSlide),y:0};
             self.index = index;
-            if(self.setTimeoutFlag){
-                clearTimeout(self.setTimeoutFlag);
-            }
-            self.setTimeoutFlag = setTimeout(function(){self.jq.height(self.targetObj.eq(index).outerHeight(true))},20);
+            self.jq.height(self.targetObj.eq(index).outerHeight(true));
+            // if(self.setTimeoutFlag){
+            //     clearTimeout(self.setTimeoutFlag);
+            // }
+            // self.setTimeoutFlag = setTimeout(function(){self.jq.height(self.targetObj.eq(index).outerHeight(true))},20);
             if(self.index !== self.preIndex){
-                UTIL.TOOL.backTop();
+                UTIL.TOOL.backTop(function(){UTIL.TRANSFORM.translate3d(self.jq,{x:-index*(self.oneSlide)},50)});
                 self.preIndex =  self.index;
-            }          
+            }else{
+                UTIL.TRANSFORM.translate3d(self.jq,{x:-index*(self.oneSlide)},500);
+            }                   
         },
         getIndex:function(){
             return this.index;
@@ -472,8 +488,9 @@ define(function(require, exports, module){
             }
             return ajustSize;
         },
-        backTop:function(){
-            $('body').animate({'scrollTop':0},500);
+        backTop:function(cbf){
+            cbf = cbf || noop;
+            $('body').stop().animate({'scrollTop':0},0,cbf);
         }
     }
     UTIL.STORE = {
