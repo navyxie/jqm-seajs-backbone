@@ -13,7 +13,11 @@ define(function(require,exports,module){
             this.model.bind('change',this.render,this);           
         },
         events:{
-            'vclick .clickUrl':'openUrl'
+            'tap .clickUrl':'openUrl',
+            'tap .likeBtn':'likeItem'
+        },
+        likeItem:function(e){
+            $(e.target).toggleClass('unLikeBtn').toggleClass('likedBtn');
         },
         openUrl:function(e){
             var self = this;

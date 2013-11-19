@@ -19,6 +19,11 @@ define(function(require,exports,module){
         },
         el:'body',
         events:{
+            'tap #likeJounalBtn':'likeJournal'
+        },
+        likeJournal:function(e){
+            $(e.target).toggleClass('unLikeJounalBtn').toggleClass('likedJounalBtn');
+            return false;
         },
         handlerTitle:function(){
             var self = this;
