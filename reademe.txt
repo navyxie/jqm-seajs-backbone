@@ -1,0 +1,1 @@
+TopAndroid工程是淘宝的SDK，为了ChaoBaida checkout不报错，TopAndroid也得一起checkout
